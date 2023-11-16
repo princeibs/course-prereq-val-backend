@@ -26,7 +26,7 @@ export class CourseService {
       if (course) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: 'Course code already exists',
+          message: 'Course code already exists'
         };
       }
 
@@ -56,7 +56,7 @@ export class CourseService {
 
   async findAll() {
     try {
-      const courses = await this.courseModel.find();
+      const courses = await this.courseModel.find().populate('prerequisite', 'code');
 
       return {
         statusCode: HttpStatus.OK,
@@ -105,6 +105,18 @@ export class CourseService {
           statusCode: HttpStatus.BAD_REQUEST,
           message: 'Invalid course Id',
         };
+      }
+
+      const hasRegistered = await this.registeredCourseModel.findOne({
+        user_id: userId,
+        course_id: course.id,
+      });
+
+      if (hasRegistered) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: `User already registered for ${course.title} (${course.code})`
+        }
       }
 
       if (course?.prerequisite) {

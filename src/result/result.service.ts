@@ -28,15 +28,27 @@ export class ResultService {
         };
       }
 
-      const result = await this.resultModel.find({
+      const result = await this.resultModel.findOne({
         user_id: createResultDto.user_id,
         course_id: createResultDto.course_id,
       });
 
       if (result) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: 'Result already exist. Cannot create duplicate'
+        const updatedResult = await result.updateOne(
+          { ...createResultDto },
+          { new: true },
+        );
+
+        if (updatedResult) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: `Update result for ${course.title} (${course.code}) successful`,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+            message: `Failed to update result for ${course.title} (${course.code})`,
+          };
         }
       }
 
@@ -47,12 +59,12 @@ export class ResultService {
       if (newResult) {
         return {
           statusCode: HttpStatus.CREATED,
-          message: 'Success',
+          message: `Create result for ${course.title} (${course.code}) successful`,
         };
       } else {
         return {
           statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-          message: 'Failed to create result',
+          message: `Failed to create result for  ${course.title} (${course.code})`,
         };
       }
     } catch (error) {
@@ -86,7 +98,7 @@ export class ResultService {
 
   async findByQuery(query: any) {
     try {
-      const results = await this.resultModel.find(query);
+      const results = await this.resultModel.find(query).populate('course_id', 'title code');
 
       return {
         statusCode: HttpStatus.OK,

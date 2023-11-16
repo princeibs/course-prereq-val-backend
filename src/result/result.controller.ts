@@ -1,8 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { ResultService } from './result.service';
 import { CreateResultDto } from './dto/create-result.dto';
 import { UpdateResultDto } from './dto/update-result.dto';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('result')
 export class ResultController {
   constructor(private readonly resultService: ResultService) {}
@@ -12,14 +23,19 @@ export class ResultController {
     return this.resultService.create(createResultDto);
   }
 
+  @Get(':userId/records')
+  findUserResults(@Param('userId') userId: string) {
+    return this.resultService.findByQuery({ user_id: userId });
+  }
+
   @Get()
   findAll() {
     return this.resultService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.resultService.findByQuery({_id: id});
+  @Get(':resultId')
+  findOne(@Param('resultId') id: string) {
+    return this.resultService.findByQuery({ _id: id });
   }
 
   // @Patch( ':id')
