@@ -24,10 +24,22 @@ export class CourseService {
       });
 
       if (course) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: 'Course code already exists'
-        };
+        const updatedCourse = await course.updateOne(
+          { ...createCourseDto },
+          { new: true },
+        );
+
+        if (!updatedCourse) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'Failed to update course',
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'Update course successful',
+          };
+        }
       }
 
       const newCourse = await this.courseModel.create({
@@ -37,7 +49,7 @@ export class CourseService {
       if (newCourse) {
         return {
           statusCode: HttpStatus.CREATED,
-          message: 'Success',
+          message: 'Create course successful',
         };
       } else {
         return {
@@ -56,7 +68,9 @@ export class CourseService {
 
   async findAll() {
     try {
-      const courses = await this.courseModel.find().populate('prerequisite', 'code');
+      const courses = await this.courseModel
+        .find()
+        .populate('prerequisite', 'code');
 
       return {
         statusCode: HttpStatus.OK,
@@ -115,8 +129,8 @@ export class CourseService {
       if (hasRegistered) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: `User already registered for ${course.title} (${course.code})`
-        }
+          message: `User already registered for ${course.title} (${course.code})`,
+        };
       }
 
       if (course?.prerequisite) {
@@ -139,7 +153,7 @@ export class CourseService {
         if (prerequisiteCourseResult.grade === 'f') {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
-            message: `Not qualified to register course. Please pass prerequisite course (${prerequisiteCourse.title}) first.`,
+            message: `Not qualified to register ${course.title} (${course.code}) unless you have passed ${prerequisiteCourse.title} (${prerequisiteCourse.code})`,
           };
         }
       }
@@ -171,15 +185,15 @@ export class CourseService {
 
   async findRegistered(query: any) {
     try {
-      const courses = await this.registeredCourseModel.find(query)
+      const courses = await this.registeredCourseModel.find(query).populate('course_id', 'code title credit_unit status');
 
       return {
         statusCode: HttpStatus.OK,
         message: 'success',
         data: {
-          courses
-        }
-      }
+          courses,
+        },
+      };
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
